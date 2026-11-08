@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useUser } from '../contexts/UserContext.jsx';
+import { useUser } from '../contexts/useUser.js';
+
 
 const Login = () => {
   const navigate = useNavigate();
-  const { registerUser, login, loading, error, clearError } = useUser();
-  const [isLogin, setIsLogin] = useState(true);
+  const { loginUser, loading, error, clearError } = useUser();
+
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
+    password: '',
   });
+
 
   const handleChange = (e) => {
     setFormData({
@@ -18,36 +20,25 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitLogin = async (e) => {
     e.preventDefault();
     clearError();
 
-    if (!formData.email.trim()) {
-      alert('Please enter your email');
-      return;
-    }
-
-    if (!isLogin && !formData.name.trim()) {
-      alert('Please enter your name');
+    if (!formData.email.trim() || !formData.password.trim()) {
+      alert('Please enter both email and password');
       return;
     }
 
     try {
-      if (isLogin) {
-        // For login, we'll just set the user data (in a real app, you'd validate credentials)
-        login({
-          name: formData.name || 'User',
-          email: formData.email,
-        });
-        alert('Logged in successfully!');
-      } else {
-        // Register new user
-        const newUser = await registerUser(formData);
-        alert('Registration successful!');
-      }
+      await loginUser({
+        email: formData.email,
+        password: formData.password,
+      });
+      alert('Logged in successfully!');
       navigate('/');
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (err) {
+      console.error('Login error:', err);
+      // error is managed by context and shown in UI
     }
   };
 
@@ -55,12 +46,8 @@ const Login = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Join us to create and take quizzes'}
-          </p>
+          <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
+          <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
         </div>
       </div>
 
@@ -80,26 +67,8 @@ const Login = () => {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {!isLogin && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="name"
-                    name="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="input-field"
-                    placeholder="Enter your full name"
-                  />
-                </div>
-              </div>
-            )}
-
+          <form className="space-y-6" onSubmit={handleSubmitLogin}>
+            {/* Email field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email Address
@@ -118,6 +87,26 @@ const Login = () => {
               </div>
             </div>
 
+            {/* Password field */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input-field"
+                  placeholder="Enter your password"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Submit button */}
             <div>
               <button
                 type="submit"
@@ -127,15 +116,16 @@ const Login = () => {
                 {loading ? (
                   <div className="flex items-center justify-center">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    {isLogin ? 'Signing in...' : 'Creating account...'}
+                    Signing in...
                   </div>
                 ) : (
-                  isLogin ? 'Sign In' : 'Create Account'
+                  'Sign In'
                 )}
               </button>
             </div>
           </form>
 
+          {/* Switch to register */}
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -147,25 +137,17 @@ const Login = () => {
             </div>
 
             <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  clearError();
-                  setFormData({ name: '', email: '' });
-                }}
+              <Link
+                to="/register"
                 className="text-primary-600 hover:text-primary-500 text-sm font-medium"
               >
-                {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-              </button>
+                Don't have an account? Sign up
+              </Link>
             </div>
           </div>
 
           <div className="mt-6 text-center">
-            <Link
-              to="/"
-              className="text-gray-600 hover:text-gray-500 text-sm"
-            >
+            <Link to="/" className="text-gray-600 hover:text-gray-500 text-sm">
               ← Back to Home
             </Link>
           </div>
